@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-B">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Biblioteca de Livros</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header>
+        <h1> Minha Biblioteca Pessoal</h1>
+    </header>
+
+    <main>
+        <section class="busca-container">
+            <h2>Buscar Livros (Google API)</h2>
+            <div class="input-grupo">
+                <input type="text" id="campo-busca" placeholder="Digite o titulo de um livro...">
+                <button id="botao-buscar">Buscar</button>
+            </div>
+            <div id="container-resultados" class="livros-grid"></div>
+        </section>
+
+        <hr>
+
+        <section class="salvos-container">
+            <h2>Minha estante de livros salvos</h2>
+            <button id="botao-exportar" class="botao-exportar">Exportar para CSV</button>
+            <div id="container-salvos" class="livros-grid"></div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

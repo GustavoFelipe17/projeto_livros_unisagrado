@@ -1,0 +1,24 @@
+# --- Ambiente Virtual ---
+# Ignora a pasta do ambiente virtual (venv), que é
+# específica da sua máquina e muito pesada.
+venv/
+
+# --- Arquivos de Senha e Configuração Local ---
+# NUNCA envie suas senhas (API keys, senhas de banco) 
+# para um repositório.
+.env
+
+# Ignora a pasta de instância do Flask (se for criada).
+instance/
+
+# --- Arquivos de Cache do Python ---
+# Ignora pastas de cache que o Python cria automaticamente.
+__pycache__/
+*.pyc
+
+# --- Arquivos de Sistema Operacional (Boa Prática) ---
+# Ignora arquivos de cache do macOS.
+.DS_Store
+
+# Ignora arquivos de thumbnail do Windows.
+Thumbs.db
