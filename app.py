@@ -178,58 +178,6 @@ def atualizar_livro(id):
 
 # --- FIM DA ROTA PUT ---
 
-# @app.route('/api/livros/exportar', methods=['GET'])
-# def exportar_livros_csv():
-#     try:
-#         # 1. Busca todos os livros no banco (igual ao GET)
-#         livros_salvos = Livro.query.all()
-
-#         # 2. Cria um "arquivo" em memória
-#         #    StringIO é um arquivo de texto que vive na RAM
-#         si = io.StringIO()
-        
-#         # 3. Prepara o "escritor" de CSV
-#         #    csv.writer sabe formatar aspas e vírgulas corretamente
-#         writer = csv.writer(si)
-
-#         # 4. Escreve a linha do Cabeçalho (Header)
-#         writer.writerow([
-#             'ID', 
-#             'Google_ID', 
-#             'Titulo', 
-#             'Autor', 
-#             'Ano_Publicacao', 
-#             'Avaliacao'
-#         ])
-
-#         # 5. Escreve os dados de cada livro
-#         for livro in livros_salvos:
-#             writer.writerow([
-#                 livro.id,
-#                 livro.google_api_id,
-#                 livro.titulo,
-#                 livro.autor,
-#                 livro.ano_publicacao,
-#                 livro.avaliacao
-#             ])
-        
-#         # 6. Pega o conteúdo completo do arquivo em memória
-#         output = si.getvalue()
-        
-#         # 7. Prepara a resposta do Flask
-#         response = make_response(output)
-        
-#         # 8. Define os "Cabeçalhos HTTP" para forçar o Download
-#         #    Isso é o que faz o navegador abrir o "Salvar Como..."
-#         response.headers["Content-Disposition"] = "attachment; filename=minha_colecao.csv"
-#         #    Isso diz ao navegador que é um arquivo CSV
-#         response.headers["Content-Type"] = "text/csv"
-        
-#         return response
-
-#     except Exception as e:
-#         return jsonify({'erro': f'Erro ao gerar CSV: {str(e)}'}), 500
-
 @app.route('/api/livros/relatorio/csv', methods=['GET'])
 def get_livros_relatorio_csv():
     """
