@@ -3,44 +3,20 @@ const campoBusca = document.getElementById('campo-busca');
 const botaoBuscar = document.getElementById('botao-buscar');
 const containerResultados = document.getElementById('container-resultados');
 const containerSalvos = document.getElementById('container-salvos');
+const botaoExportar = document.getElementById('botao-exportar');
 
 // --- CONSTANTE DA NOSSA API ---
 // O endereço do nosso servidor backend (Flask)
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+const API_BASE_URL = '/api';
 
 // --- "Ouvintes" de Eventos ---
 // O que acontece quando o usuário clica em "Buscar"
 botaoBuscar.addEventListener('click', buscarLivros);
+botaoExportar.addEventListener('click', exportarParaCSV); // <-- ADICIONA O OUVINTE CORRETO
 
-// O que acontece quando a página termina de carregar
-document.addEventListener('DOMContentLoaded', carregarLivrosSalvos);
-
+// Combina os dois "DOMContentLoaded" em um só
 document.addEventListener('DOMContentLoaded', () => {
-
-    // Procura o botão de exportar
-    const botaoExportar = document.getElementById('botao-exportar');
-
-    // Se o botão existir, adiciona o evento de clique
-    if (botaoExportar) {
-        botaoExportar.addEventListener('click', () => {
-            console.log('Botão de exportar clicado. Iniciando download...');
-
-            // *** SUA ALTERAÇÃO ESTÁ AQUI ***
-            
-            // A linha antiga era: const urlRelatorio = '/api/livros/relatorio/csv';
-            // A nova linha constrói a URL completa:
-            const urlRelatorio = `${API_BASE_URL}/livros/relatorio/csv`;
-            
-            // Opcional: Adicione um log para verificar a URL final
-            console.log(`Redirecionando para: ${urlRelatorio}`);
-
-            // Método simples: redireciona o navegador para a URL.
-            // O servidor Flask (com 'Content-Disposition') força o download.
-            window.location.href = urlRelatorio;
-        });
-    } else {
-        console.error('O botão com id "botao-exportar" não foi encontrado.');
-    }
+    carregarLivrosSalvos();
 });
 
 // --- FUNÇÕES PRINCIPAIS ---
@@ -303,3 +279,9 @@ function mostrarLivrosSalvos(livros) {
     });
 }
 
+function exportarParaCSV() {
+    // Manda o navegador navegar até a URL da API de exportação.
+    // O backend força o download (Content-Disposition).
+    console.log('Iniciando download do CSV...');
+    window.location.href = `${API_BASE_URL}/livros/exportar`; // <-- USA A ROTA CORRETA
+}
