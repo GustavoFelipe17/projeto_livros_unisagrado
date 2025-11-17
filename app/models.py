@@ -20,7 +20,10 @@ class Livro(db.Model):
 
     # Regra de CHECK para a avaliação
     __table_args__ = (
-        CheckConstraint('avaliacao >= 1 AND avaliacao <= 5', name='check_avaliacao_range'),
+        CheckConstraint(
+            '(avaliacao >= 1 AND avaliacao <= 5) OR (avaliacao IS NULL)',
+            name='check_avaliacao_range'
+        ),
     )
 
     def to_dict(self):

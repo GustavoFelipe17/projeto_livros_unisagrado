@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from .models import db
 from .routes import api
 
-def create_app():
+def create_app(config_overrides=None):
     """Fábrica de Aplicação (Application Factory)"""
     
     # Carrega variáveis de ambiente
@@ -17,9 +17,14 @@ def create_app():
     app = Flask(__name__)
     CORS(app) # Habilita o CORS
 
-    # --- Configuração ---
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    if config_overrides:
+        # Se estamos testando, usa as configurações do teste
+        app.config.update(config_overrides)
+    else:
+        # Se estamos rodando normal (python run.py), usa o .env
+        # --- Configuração ---
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # --- Inicialização dos Módulos ---
     
