@@ -7,7 +7,6 @@ from .models import db, Livro
 
 api = Blueprint('api', __name__)
 
-# ATUALIZAÇÃO 2: ROTAS DA API DE CRUD
 @api.route('/livros', methods=['POST'])
 def adicionar_livro():
     dados = request.get_json()
@@ -33,14 +32,12 @@ def adicionar_livro():
             return jsonify({'erro': 'Este livro (google_api_id) já foi salvo.'}), 409
         return jsonify({'erro': f'Erro ao salvar no banco: {str(e)}'}), 500
 
-# Rota para LER (Read) todos os livros salvos [MÉTODO GET]
 @api.route('/livros', methods=['GET'])
 def get_livros_salvos():
     livros_salvos = Livro.query.all()
     lista_json = [livro.to_dict() for livro in livros_salvos]
     return jsonify(lista_json)
 
-# Rota para BUSCAR livros na API do Google
 @api.route('/buscar', methods=['GET'])
 def buscar_livros_google():
     termo_busca = request.args.get('termo')
@@ -74,10 +71,7 @@ def buscar_livros_google():
 
     except requests.exceptions.RequestException as e:
         return jsonify({'erro': f'Erro ao se comunicar com a Google Books API: {str(e)}'}), 503
-# FIM DA ATUALIZAÇÃO 4
 
-# ATUALIZAÇÃO 5: ROTA PARA DELETAR LIVROS 
-# O <int:id> na rota captura o número (ID) do livro da URL
 @api.route('/livros/<int:id>', methods=['DELETE'])
 def deletar_livro(id):
     livro_para_deletar = Livro.query.get(id)
@@ -91,7 +85,6 @@ def deletar_livro(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'erro': f'Erro ao deletar o livro: {str(e)}'}), 500
-# FIM DA ATUALIZAÇÃO 5
 
 @api.route('/livros/<int:id>', methods=['PUT'])
 def atualizar_livro(id):
@@ -114,9 +107,6 @@ def atualizar_livro(id):
         db.session.rollback()
         return jsonify({'erro': f'Erro ao atualizar: {str(e)}'}), 500
 
-# --- FIM DA ROTA PUT ---
-
-# Rota para EXPORTAR (Desafio Opcional) [MÉTODO GET]
 @api.route('/livros/exportar', methods=['GET'])
 def exportar_livros_csv():
     try:

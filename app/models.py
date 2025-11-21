@@ -1,12 +1,8 @@
-# app/models.py
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 
-# 1. Criamos a *instância* do SQLAlchemy, mas sem app.
-#    O app será conectado a ele depois.
 db = SQLAlchemy()
 
-# 2. Colamos nossas classes de modelo aqui
 class Livro(db.Model):
     __tablename__ = 'livros'
     
@@ -18,7 +14,6 @@ class Livro(db.Model):
     url_capa = db.Column(db.String(500))
     avaliacao = db.Column(db.Integer, nullable=True, default=None)
 
-    # Regra de CHECK para a avaliação
     __table_args__ = (
         CheckConstraint(
             '(avaliacao >= 1 AND avaliacao <= 5) OR (avaliacao IS NULL)',

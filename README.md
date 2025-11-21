@@ -1,29 +1,41 @@
-Projeto: Aplicativo Full-Stack de Biblioteca Pessoal
 1. Descrição Detalhada do Domínio do Problema
-Este projeto é um aplicativo web full-stack que consome uma API pública e implementa um módulo de persistência com CRUD.
+Este projeto é um aplicativo web full-stack que consome uma API pública e implementa um módulo de persistência com CRUD (Create, Read, Update, Delete) completo.
 
-O domínio do problema é o gerenciamento de uma biblioteca pessoal de livros. O sistema permite que um usuário busque por livros em uma fonte externa (a API do Google Books) e salve os livros de seu interesse em uma coleção pessoal, que é persistida em um banco de dados relacional. O usuário pode, a qualquer momento, visualizar sua coleção e remover itens dela.
+O domínio do problema é o gerenciamento de uma biblioteca pessoal de livros. O sistema permite que um usuário:
+
+ -Busque livros em uma fonte externa (a API do Google Books).
+
+ -Salve os livros de seu interesse em uma coleção pessoal (persistida em um banco de dados PostgreSQL).
+
+ -Visualize todos os livros salvos em sua coleção.
+
+ -Atualize os livros em sua coleção com uma avaliação pessoal (1 a 5 estrelas).
+
+ -Delete livros de sua coleção.
+
+ -Exporte sua coleção completa para um arquivo .csv.
 
 2. Modelo Conceitual e Lógico do Banco de Dados
 Modelo Conceitual
-O sistema é centrado em uma única entidade principal: Livro. Esta entidade representa um livro que o usuário escolheu salvar em sua coleção pessoal. Os dados desta entidade são preenchidos tanto pela API do Google quanto pelo nosso próprio banco de dados (como o id único).
+O sistema é centrado em uma única entidade principal: Livro. Esta entidade representa um livro que o usuário escolheu salvar em sua coleção. Os dados desta entidade são preenchidos tanto pela API do Google (título, autor) quanto pelo próprio usuário (avaliação).
 
-Para implementar o modelo conceitual, utilizamos uma única tabela no PostgreSQL, chamada livros. Esta tabela armazena as informações relevantes para exibir o livro na coleção do usuário.
-
-A estrutura da tabela livros é a seguinte:
+Modelo Lógico (PostgreSQL)
+Para implementar o modelo, utilizamos uma única tabela no PostgreSQL, chamada livros. Esta tabela armazena todas as informações relevantes e aplica restrições de domínio para garantir a integridade dos dados, conforme definido em app/models.py.
 
 Nome da Coluna  -  Tipo de Dado (PostgreSQL)  -  Chave/Restrição  -  Descrição
-     id                   Serial                  PRIMARY KEY          Identificador único auto-incrementado
- google_api_id         VARCHAR(100)             UNIQUE NOT NULL        O ID do livro vindo da API do Google
-   titulo              VARCHAR(255)                 NOT NULL           O titulo do livro
-   autor               VARCHAR(255)                                    O ano de publicação
-  url_capa             VARCHAR(500)                                    O link para a imagem da capa
+     id                   SERIAL                    PRIMARY KEY         Identificador único auto-incrementado.
+ google_api_id           VARCHAR(100)             UNIQUE NOT NULL       O ID do livro vindo da API do Google.
+   titulo                VARCHAR(255)                NOT NULL           O título do livro.
+   autor                 VARCAHR(255)                                   O(s) autor(es) do livro.
+ ano_publicacao          VARCHAR(10)                                    O ano de publicação.
+ url_capa                VARCHAR(10)                                    O link (URL) para a imagem da capa.
+ avaliacao               INTEGER                      CHECK             Nota (1-5) dada pelo usuário. Permite NULL.
 
-3. Scripts SQL de Criação e Inserção
+ 3. Scripts SQL de Criação e Inserção
 Embora o projeto utilize o ORM SQLAlchemy (que gera o SQL automaticamente através do comando db.create_all()), os scripts SQL brutos equivalentes para PostgreSQL são os seguintes:
 
 Script de Criação (DDL)
-Este script cria a tabela livros conforme o modelo lógico.
+Este script cria a tabela livros refletindo o modelo em app/models.py.
 
 CREATE TABLE livros (
     id SERIAL PRIMARY KEY,
@@ -31,11 +43,15 @@ CREATE TABLE livros (
     titulo VARCHAR(255) NOT NULL,
     autor VARCHAR(255),
     ano_publicacao VARCHAR(10),
-    url_capa VARCHAR(500)
+    url_capa VARCHAR(500),
+    avaliacao INTEGER,
+    CONSTRAINT check_avaliacao_range CHECK (
+        (avaliacao >= 1 AND avaliacao <= 5) OR (avaliacao IS NULL)
+    )
 );
 
 Script de Inserção (DML)
-Este script insere um livro de exemplo na tabela (simulando a ação da rota POST /api/livros).
+Este script insere um livro de exemplo, simulando a ação da rota POST /api/livros.
 
 INSERT INTO livros (google_api_id, titulo, autor, ano_publicacao, url_capa)
 VALUES (
@@ -47,75 +63,80 @@ VALUES (
 );
 
 4. Arquitetura do Código e Módulos
-O projeto segue uma arquitetura de 3 camadas (3-Tier) clássica, separando as responsabilidades:
+O projeto foi refatorado de um script monolítico para uma arquitetura modular profissional usando o padrão Application Factory. Isso separa as responsabilidades, tornando o projeto mais limpo, fácil de manter e testável.
 
-1. Backend (Servidor - app.py)
-Tecnologia: Python com Flask e Flask-SQLAlchemy.
+Estrutura de Pastas e Responsabilidades
+projeto_livros/ (Raiz)
 
-Responsabilidade: É o "cérebro" da aplicação.
+run.py: O ponto de entrada da aplicação. Ele importa a "fábrica" e inicia o servidor Flask.
 
-Módulos:
+.env: Armazena as credenciais secretas do banco de dados. (Não versionado).
 
-API (Rotas): Define os endpoints (/api/livros, /api/buscar, etc.) que o frontend pode chamar.
+setup.py: Permite que o projeto seja instalado como um pacote, o que é essencial para que os testes (pytest) encontrem os módulos.
 
-Controle de CRUD (Req. #4): Implementa as funções adicionar_livro(), get_livros_salvos(), deletar_livro() que manipulam o banco.
+pytest.ini: Configura o pytest para encontrar os arquivos de teste.
 
-Consumo de API Externa (Req. #1): A rota /api/buscar atua como um proxy, buscando dados na API do Google Books e formatando-os para o frontend.
+app/ (O Módulo da Aplicação)
 
-Persistência (ORM): A classe Livro(db.Model) mapeia a tabela do banco para um objeto Python.
+__init__.py: Contém a "fábrica" create_app(). É responsável por:
 
-Segurança (Req. #6): Utiliza Flask-CORS para permitir a comunicação com o frontend e dotenv para gerenciar senhas externamente (Req. #5).
+Criar a instância do app Flask.
 
-2. Frontend (Cliente - frontend/)
-Tecnologia: HTML, CSS e JavaScript (Vanilla JS).
+Carregar as configurações (do .env ou dos testes).
 
-Responsabilidade: É o "rosto" da aplicação; tudo o que o usuário vê e com o que interage.
+Inicializar o db e o CORS.
 
-Módulos:
+Registrar o blueprint da API (routes.py).
 
-index.html: A estrutura (esqueleto) da página.
+Servir a rota principal / que carrega o index.html.
 
-style.css: A estilização (pintura) e o layout dos cards.
+models.py: Define a estrutura do banco de dados (o modelo Livro) e suas regras (CHECK, UNIQUE, NOT NULL).
 
-script.js: O "cérebro" do frontend. É responsável por:
+routes.py: Define todas as rotas da API (/api/...) usando um Flask Blueprint. Contém toda a lógica de negócios (CRUD, busca, exportação).
 
-Ouvir eventos (cliques nos botões "Buscar", "Salvar", "Deletar").
+templates/: Contém os arquivos HTML (ex: index.html) que são servidos pelo Flask.
 
-Usar a função fetch para fazer requisições HTTP para a API do Backend.
+static/: Contém os arquivos estáticos (ex: style.css, script.js) que são usados pelo HTML.
 
-Manipular o DOM para criar, atualizar e remover dinamicamente os cards de livros na tela.
+tests/
 
-3. Banco de Dados (Persistência)
-Tecnologia: PostgreSQL.
+conftest.py: Prepara o ambiente de testes, criando um app Flask "falso" conectado a um banco de dados SQLite em memória.
 
-Responsabilidade: É o "armazém" da aplicação.
-
-Módulos:
-
-Banco livros_db: O contêiner para nossos dados.
-
-Tabela livros: Onde os dados da coleção pessoal do usuário são armazenados de forma permanente.
+test_routes.py: Contém os testes unitários que simulam chamadas à API e verificam as respostas, garantindo que o CRUD funcione.
 
 5. Exemplos de Consultas SQL Implementadas
-O ORM (SQLAlchemy) abstrai as consultas SQL. As operações da API mapeiam para os seguintes comandos SQL:
+
+O ORM (SQLAlchemy) abstrai as consultas. As operações da API (definidas em routes.py) mapeiam para os seguintes comandos SQL:
 
 GET /api/livros (Ler a coleção)
 
-SQL: SELECT id, google_api_id, titulo, autor, ano_publicacao, url_capa FROM livros;
+SQL: SELECT * FROM livros;
 
-Resultado: Retorna uma lista (JSON) de todos os livros salvos no banco.
+Resultado: Retorna um JSON com a lista de todos os livros salvos.
 
 POST /api/livros (Salvar um livro)
 
-SQL: INSERT INTO livros (google_api_id, titulo, ...) VALUES (...);
+SQL: INSERT INTO livros (google_api_id, titulo, autor, ...) VALUES ($1, $2, $3, ...);
 
-Resultado: Insere uma nova linha na tabela e retorna o objeto (JSON) do livro recém-criado.
+Resultado: Insere um livro no banco. Retorna um JSON do livro recém-criado (Status 201).
+
+PUT /api/livros/<id> (Atualizar avaliação)
+
+SQL: UPDATE livros SET avaliacao = $1 WHERE id = $2;
+
+Resultado: Atualiza a nota de um livro. Retorna um JSON do livro atualizado (Status 200).
 
 DELETE /api/livros/<id> (Deletar um livro)
 
-SQL: DELETE FROM livros WHERE id = 1; (Exemplo para o livro de ID 1)
+SQL: DELETE FROM livros WHERE id = $1;
 
-Resultado: Remove a linha correspondente do banco e retorna uma mensagem de sucesso.
+Resultado: Remove um livro do banco. Retorna um JSON com uma mensagem de sucesso (Status 200).
+
+GET /api/livros/exportar (Exportar CSV)
+
+SQL: SELECT * FROM livros;
+
+Resultado: Pega todos os dados e os formata como um arquivo minha_colecao.csv, forçando o download no navegador.
 
 6. Instruções Completas de Execução
 Siga estes passos para configurar e executar o projeto.
@@ -125,57 +146,83 @@ Python 3.10+
 
 PostgreSQL (com o servidor rodando)
 
-(Opcional) Insomnia ou Postman para testes de API
+Git (opcional, para clonar)
 
-Passo 1: Configuração do Ambiente Backend
+Passo 1: Download e Setup do Ambiente
 1-Clone ou baixe o projeto.
 
-2-Navegue até a pasta raiz projeto_livros.
+2-Navegue até a pasta raiz projeto_livros em um terminal.
 
-3-Crie e ative um ambiente virtual:
-
-# No terminal:
-python -m venv venv
+3-Crie e ative um ambiente virtual:  
+# Digite primeiro este comando
+python -m venv venv 
+# Depois digite esse
 .\venv\Scripts\activate
 
-4-Instale as dependências:
+Passo 2: Instalação das Dependências
+Instale todas as bibliotecas necessárias:
 
+# também no diretório da pasta raiz:
+pip install Flask Flask-SQLAlchemy psycopg2-binary python-dotenv requests flask-cors pytest
+
+2-(Para Testes) Instale seu projeto em modo editável (isso permite que o pytest encontre o módulo app):
 # No terminal:
-pip install -r requirements.txt
+pip install -e .
 
-5-Configure o Banco de Dados:
+Passo 3: Configuração do Banco de Dados e .env
+Abra o PGAdmin (ou outro cliente PostgreSQL) e crie um novo banco de dados vazio chamado livros_db.
 
-Abra o PGAdmin e crie um novo banco de dados chamado livros_db.
+Na pasta raiz projeto_livros/, crie um arquivo chamado .env.
 
-6-Configure as Variáveis de Ambiente:
+Copie o conteúdo abaixo para dentro do .env, substituindo SUA_SENHA pela sua senha do PostgreSQL (se ela tiver caracteres como @, use %40):
+DATABASE_URL="postgresql://postgres:SUA_SENHA@127.0.0.1:5432/livros_db"
 
-Crie um arquivo .env na raiz (projeto_livros/).
+Passo 4: Criação das Tabelas
+Antes de rodar o app, precisamos criar as tabelas no banco.
 
-Adicione sua string de conexão: DATABASE_URL="postgresql://postgres:SUA_SENHA@127.0.0.1:5432/livros_db"
+Defina a variável de ambiente FLASK_APP para que o shell funcione:
 
-7-Crie as Tabelas no Banco:
+PowerShell
 
-# No terminal digite o comando abaixo e pressione enter:
+# Para PowerShell
+$env:FLASK_APP = "run.py"
+Bash
+
+# Para CMD clássico
+set FLASK_APP=run.py
+Execute o flask shell (que agora usa o run.py):
+
+Bash
+
 flask shell
+Dentro do shell do Python (>>>), digite os comandos para criar as tabelas com base nos models.py:
 
-# Dentro do shell do Python (>>>):
-1- >>> from app import db
-2- >>> db.create_all()
-3- >>> exit()
+Python
 
-Passo 2: Execução do Projeto
+>>> db.create_all()
+>>> exit()
+Passo 5: Execução do Projeto
+Com o venv ainda ativo, execute o projeto com um único comando:
 
-1- Dentro de um terminal, ative o venv utilizando o comando: .\venv\Scripts\activate
-# Caso não tenha instalado o venv, utilize o comando python -m venv venv. Após isso, utilize o comando logo acima novamente.
+python run.py
+O servidor estará rodando em http://127.0.0.1:5000.
 
-2- Após utilizad o comando acima, certifique-se que em seu terminal apareceu escrito "(venv)" antes de diretório, feito isso, utilize o comando abaixo:
-python app.py
-Esse comando irá executar a aplicação
+Passo 6: Acessar o Aplicativo
+Abra seu navegador.
 
-3- O servidor estará rodando em http://127.0.0.1:5000
+Acesse: http://127.0.0.1:5000
 
+A aplicação estará 100% funcional.
 
-Passo 3: Acessar o Aplicativo
- -Abra seu navegador e acesse: http://127.0.0.1:5000
+7. Execução dos Testes Unitários (Req. #7)
+Para garantir a qualidade e a estabilidade da API, testes unitários foram criados.
 
- -A aplicação estará 100% funcional.
+Certifique-se de que seu venv está ativo e que você executou pip install -e . (Passo 2).
+
+(O servidor python run.py não precisa estar rodando).
+
+Na pasta raiz projeto_livros/, simplesmente execute:
+
+pytest
+
+O pytest encontrará o conftest.py, criará um banco de dados SQLite em memória, rodará todos os testes e apresentará um relatório de sucesso (ex: 2 passed).
